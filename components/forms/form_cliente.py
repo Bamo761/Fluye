@@ -65,7 +65,7 @@ def formulario_cliente():
 
             conn.commit()
             st.session_state.pop("cliente_a_editar", None)  # Limpiamos después de guardar
-            st.experimental_rerun()
+            st.rerun()
 
     cursor.close()
     conn.close()

@@ -27,4 +27,4 @@ def listar_intermediarios():
                     "nombre": inter[1],
                     "contacto": inter[2]
                 }
-                st.experimental_rerun()
+                st.rerun()

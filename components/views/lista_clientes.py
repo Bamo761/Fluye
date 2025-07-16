@@ -28,7 +28,7 @@ def listar_clientes():
         with col2:
             if st.button("✏️ Editar", key=f"edit_{row['ID']}"):
                 st.session_state['cliente_a_editar'] = row.to_dict()
-                st.experimental_rerun()  # Recarga para que el formulario detecte el cliente
+                st.rerun()  # Recarga para que el formulario detecte el cliente
 
     cursor.close()
     conn.close()
