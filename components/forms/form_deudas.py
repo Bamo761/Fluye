@@ -79,7 +79,7 @@ def formulario_deuda():
     coincidencias = buscar_cliente(nombre_ingresado, clientes) if nombre_ingresado else []
 
     if "cliente_seleccionado" not in st.session_state:
-    st.session_state.cliente_seleccionado = None
+        st.session_state.cliente_seleccionado = None
     if coincidencias:
         opcion = st.selectbox("Coincidencias:", coincidencias)
         if opcion:
