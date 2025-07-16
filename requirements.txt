@@ -1,0 +1,6 @@
+streamlit
+pandas
+numpy
+matplotlib
+plotly
+sqlite3  # Solo si estás usando en local (no hace falta ponerlo si lo corre Python)
