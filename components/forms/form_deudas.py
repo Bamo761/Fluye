@@ -78,15 +78,18 @@ def formulario_deuda():
 
     coincidencias = buscar_cliente(nombre_ingresado, clientes) if nombre_ingresado else []
 
-    if "cliente_seleccionado" not in st.session_state:
-        st.session_state.cliente_seleccionado = None
     if coincidencias:
-        opcion = st.selectbox("Coincidencias:", coincidencias)
-        if opcion:
-            cedula = opcion.split(" - ")[1]
-            cliente = next((c for c in clientes if c["cedula"] == cedula), None)
+    opcion = st.selectbox("Coincidencias:", coincidencias, key="opcion_cliente")
+
+    if st.button("✅ Seleccionar cliente"):
+        cedula = opcion.split(" - ")[1]
+        cliente = next((c for c in clientes if c["cedula"] == cedula), None)
         if cliente:
             st.session_state.cliente_seleccionado = cliente
+            st.success(f"Cliente seleccionado: {cliente['nombre']} ({cliente['cedula']})")
+        else:
+            st.error("No se pudo encontrar el cliente.")
+
     cliente_seleccionado = st.session_state.cliente_seleccionado
 
     if cliente_seleccionado:
