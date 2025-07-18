@@ -1,10 +1,16 @@
 import streamlit as st
 import sqlite3
 import pandas as pd
+from db.connection import get_connection
+
+
+
+
 
 st.set_page_config(page_title="Dashboard Cliente", layout="wide")
 
-conn = sqlite3.connect("fluye.db")
+# --- Conexión a la base de datos --- #
+conn = get_connection()
 cursor = conn.cursor()
 
 # FUNCIÓN UTILITARIA PARA BUSCAR CLIENTES
