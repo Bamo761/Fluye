@@ -25,18 +25,22 @@ def buscar_cliente(nombre_buscado, clientes):
 def guardar_deuda(cursor, cliente_id, intermediario_id, monto, frecuencia_pago, interes,
                   cantidad_pagos, pagos_de_gracia, fecha_inicio, tipo_prestamo,
                   cuota_fija, cuotas_totales, monto_total, tasa_mora):
-    cursor.execute("""
-        INSERT INTO deudas (
+    try:
+        cursor.execute("""
+            INSERT INTO deudas (
+                cliente_id, intermediario_id, monto, frecuencia_pago, interes,
+                cantidad_pagos, pagos_de_gracia, fecha_inicio, tipo_prestamo,
+                cuota_fija, cuotas_totales, monto_total, tasa_mora, estado
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'activa')
+        """, (
             cliente_id, intermediario_id, monto, frecuencia_pago, interes,
             cantidad_pagos, pagos_de_gracia, fecha_inicio, tipo_prestamo,
-            cuota_fija, cuotas_totales, monto_total, tasa_mora, estado
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'activa')
-    """, (
-        cliente_id, intermediario_id, monto, frecuencia_pago, interes,
-        cantidad_pagos, pagos_de_gracia, fecha_inicio, tipo_prestamo,
-        cuota_fija, cuotas_totales, monto_total, tasa_mora
-    ))
-    return cursor.lastrowid
+            cuota_fija, cuotas_totales, monto_total, tasa_mora
+        ))
+        return cursor.lastrowid
+    except Exception as e:
+        st.error(f"💥 Error al guardar deuda: {e}")
+        return None
 
 def guardar_cronograma(cronograma, cliente_id, deuda_id, cursor):
     for fila in cronograma:
