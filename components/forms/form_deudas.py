@@ -59,6 +59,7 @@ def cronograma_existe(deuda_id, cursor):
 def formulario_deuda():
     conn = get_connection()
     cursor = conn.cursor()
+    st.caption(f"Versión de Streamlit: {st.__version__}")
 
     st.header("🧾 Registro de Nueva Deuda")
 
