@@ -5,14 +5,11 @@ from datetime import datetime, timedelta
 from db.connection import get_connection
 
 def mostrar_calendario_seguimiento():
-    # Título de la sección
     st.title("📅 Seguimiento de Pagos")
 
-    # Conexion a la BD
     conn = get_connection()
     cursor = conn.cursor()
 
-    # Consulta de los cronogramas con JOIN a clientes y deudas activas
     query = """
         SELECT c.nombre AS cliente, cp.fecha, cp.estado, cp.deuda_id
         FROM cronograma_pagos cp
@@ -22,6 +19,7 @@ def mostrar_calendario_seguimiento():
     """
 
     df = pd.read_sql_query(query, conn)
+    conn.close()  # Cerramos la conexión porque ya no la necesitamos
 
     if not df.empty:
         df['fecha'] = pd.to_datetime(df['fecha'])
@@ -39,7 +37,6 @@ def mostrar_calendario_seguimiento():
 
         df['estado_real'] = df.apply(estado_real, axis=1)
 
-        # Filtro por días
         dias_mostrar = st.slider("Ver cuotas de los próximos (días):", 7, 60, 30)
         hasta = hoy + timedelta(days=dias_mostrar)
         df_filtrado = df[(df['fecha'] >= hoy - timedelta(days=3)) & (df['fecha'] <= hasta)]
@@ -52,11 +49,11 @@ def mostrar_calendario_seguimiento():
                 nombre = row['cliente']
                 estado = row['estado_real']
                 deuda_id = row['deuda_id']
-                # Link al dashboard del cliente
                 st.markdown(f"- [{nombre} - {estado}](?dashboard_cliente={deuda_id})")
-
     else:
         st.info("No hay cuotas registradas aún.")
 
-    # Redirección si hay query param
-    query
+    # Redirección automática si hay query param (?dashboard_cliente=...)
+    if "dashboard_cliente" in st.query_params:
+        deuda_id = st.query_params["dashboard_cliente"]
+        st.switch_page("pages/7_Dashboard_Cliente.py")
