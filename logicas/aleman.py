@@ -1,6 +1,6 @@
 # aleman.py
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta. date
 
 # Mapa de frecuencias a número de días
 FRECUENCIA_DIAS = {
@@ -37,7 +37,8 @@ def calcular_prestamo(
         raise ValueError("El periodo de gracia no puede ser mayor o igual a la cantidad de pagos.")
 
     dias_por_periodo = FRECUENCIA_DIAS[frecuencia_pago]
-    fecha_base = datetime.strptime(fecha_inicio, "%Y-%m-%d")
+    fecha_base = datetime.combine(fecha_inicio, datetime.min.time())
+
 
     # Paso 1: calcular intereses acumulados durante el periodo de gracia
     saldo = monto
