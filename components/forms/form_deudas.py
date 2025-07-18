@@ -1,7 +1,7 @@
 # form_deudas.py
 import streamlit as st
 import difflib
-from datetime import datetime, date
+from datetime import date
 from db.connection import get_connection
 from logicas.simulador import simular_prestamo
 
@@ -91,7 +91,6 @@ def formulario_deuda():
                         st.error("⚠️ Opción inválida: no se puede extraer cédula.")
                     else:
                         cedula = partes[1].strip()
-                        st.write("📄 Cédula extraída:", cedula)
                         cliente_encontrado = next((c for c in clientes if str(c["cedula"]).strip() == cedula), None)
 
                         if cliente_encontrado:
@@ -110,6 +109,7 @@ def formulario_deuda():
 
         if st.button("🔁 Cambiar cliente"):
             st.session_state.cliente_seleccionado = None
+            st.session_state.pop("cronograma", None)
             st.rerun()
 
         intermediario_opciones = [i["nombre"] for i in intermediarios]
@@ -142,61 +142,57 @@ def formulario_deuda():
                 pagos_de_gracia, fecha_inicio, frecuencia_pago
             )
 
+            st.session_state["cronograma"] = resultado["cronograma"]
+            st.session_state["cuota_fija"] = resultado.get("cuota_fija", 0)
+            st.session_state["monto_total"] = resultado["monto_total"]
+            st.session_state["cuotas_totales"] = resultado.get("cuotas_totales", cantidad_pagos)
+
             st.success("Simulación exitosa ✅")
 
-            cuota_fija = resultado.get("cuota_fija", 0)
-            monto_total = resultado["monto_total"]
-            cuotas_totales = resultado.get("cuotas_totales", cantidad_pagos)
+        if "cronograma" in st.session_state:
+            st.info(f"**Cuota fija:** {st.session_state['cuota_fija']:.2f} | "
+                    f"**Monto total:** {st.session_state['monto_total']:.2f} | "
+                    f"**# Cuotas:** {st.session_state['cuotas_totales']}")
 
-            st.info(f"**Cuota fija:** {cuota_fija:.2f} | **Monto total:** {monto_total:.2f} | **# Cuotas:** {cuotas_totales}")
-
-            cronograma = resultado["cronograma"]
             st.subheader("📅 Cronograma de Pagos")
-            st.dataframe(cronograma, use_container_width=True)
+            st.dataframe(st.session_state["cronograma"], use_container_width=True)
 
             if st.button("💾 Guardar deuda y cronograma"):
-                st.info("Intentando guardar la deuda...")
-
-                st.write("🛠️ Datos a guardar:", {
-                    "cliente_id": cliente["id"],
-                    "intermediario_id": intermediario["id"],
-                    "monto": monto,
-                    "frecuencia_pago": frecuencia_pago,
-                    "interes": interes,
-                    "cantidad_pagos": cantidad_pagos,
-                    "pagos_de_gracia": pagos_de_gracia,
-                    "fecha_inicio": fecha_inicio.isoformat(),
-                    "tipo_prestamo": tipo_prestamo,
-                    "cuota_fija": cuota_fija,
-                    "cuotas_totales": cuotas_totales,
-                    "monto_total": monto_total,
-                    "tasa_mora": tasa_mora
-                })
-
                 deuda_id = guardar_deuda(
-                    cursor, cliente["id"], intermediario["id"], monto,
-                    frecuencia_pago, interes, cantidad_pagos, pagos_de_gracia,
-                    fecha_inicio.isoformat(), tipo_prestamo,
-                    cuota_fija, cuotas_totales, monto_total, tasa_mora
+                    cursor,
+                    cliente["id"],
+                    intermediario["id"],
+                    monto,
+                    frecuencia_pago,
+                    interes,
+                    cantidad_pagos,
+                    pagos_de_gracia,
+                    fecha_inicio.isoformat(),
+                    tipo_prestamo,
+                    st.session_state["cuota_fija"],
+                    st.session_state["cuotas_totales"],
+                    st.session_state["monto_total"],
+                    tasa_mora
                 )
 
                 if deuda_id:
-                    conn.commit()
-                    st.success(f"✅ Deuda guardada con ID: {deuda_id}")
+                    conn.commit()  # 👈 AHORA SÍ: justo después de guardar la deuda
 
-                    if cronograma_existe(deuda_id, cursor):
-                        st.warning("⚠️ Esta deuda ya tiene cronograma registrado. No se volverá a guardar.")
+                    if not cronograma_existe(deuda_id, cursor):
+                        guardar_cronograma(st.session_state["cronograma"], cliente["id"], deuda_id, cursor)
+                        conn.commit()
+                        st.success("Deuda y cronograma guardados exitosamente 🥳")
+                        # Limpiar estado
+                        st.session_state.pop("cronograma")
+                        st.session_state.pop("cuota_fija")
+                        st.session_state.pop("monto_total")
+                        st.session_state.pop("cuotas_totales")
+                        st.session_state.cliente_seleccionado = None
+                        st.rerun()
                     else:
-                        st.info("Guardando cronograma de pagos...")
-                        try:
-                            guardar_cronograma(cronograma, cliente["id"], deuda_id, cursor)
-                            conn.commit()
-                            st.success("🧾 Cronograma guardado exitosamente")
-                        except Exception as e:
-                            st.error(f"💥 Error al guardar el cronograma: {e}")
+                        st.warning("Esta deuda ya tiene cronograma registrado.")
                 else:
-                    st.error("❌ No se pudo guardar la deuda. Revisa los datos o los logs.")
+                    st.error("❌ No se pudo guardar la deuda.")
 
     cursor.close()
     conn.close()
-
