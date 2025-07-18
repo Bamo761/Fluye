@@ -1,4 +1,4 @@
-#form_deudas.py
+# form_deudas.py
 import streamlit as st
 import difflib
 from datetime import datetime, date
@@ -64,7 +64,6 @@ def cronograma_existe(deuda_id, cursor):
 # ─── FORMULARIO ─────────────────────────────────────────────────────
 
 def formulario_deuda():
-
     conn = get_connection()
     cursor = conn.cursor()
 
@@ -73,27 +72,33 @@ def formulario_deuda():
     clientes = obtener_clientes(cursor)
     intermediarios = obtener_intermediarios(cursor)
 
-    st.subheader("Buscar Cliente")
-    nombre_ingresado = st.text_input("Nombre / Cédula / Placa")
+    # Asegurar estado del cliente
+    if "cliente_seleccionado" not in st.session_state:
+        st.session_state.cliente_seleccionado = None
 
-    coincidencias = buscar_cliente(nombre_ingresado, clientes) if nombre_ingresado else []
+    cliente_seleccionado = st.session_state.cliente_seleccionado
 
-    if coincidencias:
-        opcion = st.selectbox("Coincidencias:", coincidencias, key="coincidencia_seleccionada")
-    
-        if st.button("✅ Seleccionar cliente"):
-            cedula = opcion.split(" - ")[1]
-            cliente = next((c for c in clientes if c["cedula"] == cedula), None)
-            if cliente:
-                st.session_state.cliente_seleccionado = cliente
-                st.rerun()
+    if cliente_seleccionado is None:
+        st.subheader("Buscar Cliente")
+        nombre_ingresado = st.text_input("Nombre / Cédula / Placa")
 
+        coincidencias = buscar_cliente(nombre_ingresado, clientes) if nombre_ingresado else []
 
-    cliente_seleccionado = st.session_state.get("cliente_seleccionado", None)
+        if coincidencias:
+            opcion = st.selectbox("Coincidencias:", coincidencias, key="coincidencia_seleccionada")
+            if st.button("✅ Seleccionar cliente"):
+                cedula = opcion.split(" - ")[1]
+                cliente = next((c for c in clientes if c["cedula"] == cedula), None)
+                if cliente:
+                    st.session_state.cliente_seleccionado = cliente
+                    st.experimental_rerun()
+    else:
+        cliente = st.session_state.cliente_seleccionado
+        st.success(f"Cliente seleccionado: {cliente['nombre']} ({cliente['cedula']})")
 
-
-    if cliente_seleccionado:
-        st.success(f"Cliente seleccionado: {cliente_seleccionado['nombre']} ({cliente_seleccionado['cedula']})")
+        if st.button("🔁 Cambiar cliente"):
+            st.session_state.cliente_seleccionado = None
+            st.experimental_rerun()
 
         intermediario_opciones = [i["nombre"] for i in intermediarios]
         intermediario_nombre = st.selectbox("Intermediario", intermediario_opciones)
@@ -113,10 +118,10 @@ def formulario_deuda():
 
         with st.expander("🧠 ¿Qué significa cada sistema de préstamo?"):
             st.info("""
-            **Francés**: Cuota fija.  
-            **Alemán**: Amortización fija, intereses decrecientes.  
-            **Americano**: Intereses periódicos y capital al final.  
-            **Simple/Compuesto**: Modelos financieros generales.
+                **Francés**: Cuota fija.  
+                **Alemán**: Amortización fija, intereses decrecientes.  
+                **Americano**: Intereses periódicos y capital al final.  
+                **Simple/Compuesto**: Modelos financieros generales.
             """)
 
         if st.button("📊 Simular"):
@@ -139,21 +144,18 @@ def formulario_deuda():
 
             if st.button("💾 Guardar deuda y cronograma"):
                 deuda_id = guardar_deuda(
-                    cursor, cliente_seleccionado["id"], intermediario["id"], monto,
+                    cursor, cliente["id"], intermediario["id"], monto,
                     frecuencia_pago, interes, cantidad_pagos, pagos_de_gracia,
                     fecha_inicio.isoformat(), tipo_prestamo,
                     cuota_fija, cuotas_totales, monto_total, tasa_mora
                 )
 
                 if not cronograma_existe(deuda_id, cursor):
-                    guardar_cronograma(cronograma, cliente_seleccionado["id"], deuda_id, cursor)
+                    guardar_cronograma(cronograma, cliente["id"], deuda_id, cursor)
                     conn.commit()
                     st.success("Deuda y cronograma guardados exitosamente 🥳")
                 else:
                     st.warning("Esta deuda ya tiene cronograma registrado. No se volvió a guardar.")
-
-    else:
-        st.info("Busca y selecciona un cliente para comenzar.")
 
     cursor.close()
     conn.close()
