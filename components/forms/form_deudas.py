@@ -88,7 +88,8 @@ def formulario_deuda():
                 st.session_state.cliente_seleccionado = cliente
 
 
-    cliente_seleccionado = st.session_state.cliente_seleccionado
+    cliente_seleccionado = st.session_state.get("cliente_seleccionado", None)
+
 
     if cliente_seleccionado:
         st.success(f"Cliente seleccionado: {cliente_seleccionado['nombre']} ({cliente_seleccionado['cedula']})")
