@@ -66,7 +66,6 @@ def formulario_deuda():
     clientes = obtener_clientes(cursor)
     intermediarios = obtener_intermediarios(cursor)
 
-    # Asegurarse de que session_state tenga el cliente
     if "cliente_seleccionado" not in st.session_state:
         st.session_state.cliente_seleccionado = None
 
@@ -75,29 +74,39 @@ def formulario_deuda():
     if cliente is None:
         st.subheader("Buscar Cliente")
         nombre_ingresado = st.text_input("Nombre / Cédula / Placa")
-
         coincidencias = buscar_cliente(nombre_ingresado, clientes) if nombre_ingresado else []
 
         if coincidencias:
             opcion = st.selectbox("Coincidencias:", coincidencias, key="coincidencia_seleccionada")
+            st.write("🔍 Opción seleccionada:", opcion)
+
             if st.button("✅ Seleccionar cliente"):
-                cedula = opcion.split(" - ")[1]
-                cliente_encontrado = next((c for c in clientes if c["cedula"] == cedula), None)
-                if cliente_encontrado:
-                    st.session_state.cliente_seleccionado = cliente_encontrado
-                    st.rerun()
+                try:
+                    partes = opcion.split(" - ")
+                    if len(partes) < 2:
+                        st.error("⚠️ Opción inválida: no se puede extraer cédula.")
+                    else:
+                        cedula = partes[1]
+                        st.write("📄 Cédula extraída:", cedula)
+                        cliente_encontrado = next((c for c in clientes if c["cedula"] == cedula), None)
+                        if cliente_encontrado:
+                            st.session_state.cliente_seleccionado = cliente_encontrado
+                            st.success(f"Cliente encontrado: {cliente_encontrado['nombre']}")
+                            st.rerun()
+                        else:
+                            st.error("😕 No se encontró el cliente con esa cédula.")
+                except Exception as e:
+                    st.exception(e)
 
         st.info("Busca y selecciona un cliente para comenzar.")
 
     else:
-        # Ya hay cliente seleccionado → mostrar formulario completo
         st.success(f"Cliente seleccionado: {cliente['nombre']} ({cliente['cedula']})")
 
         if st.button("🔁 Cambiar cliente"):
             st.session_state.cliente_seleccionado = None
             st.rerun()
 
-        # 🔽 Aquí sí viene tu formulario completo ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
         intermediario_opciones = [i["nombre"] for i in intermediarios]
         intermediario_nombre = st.selectbox("Intermediario", intermediario_opciones)
         intermediario = next((i for i in intermediarios if i["nombre"] == intermediario_nombre), None)
@@ -157,4 +166,3 @@ def formulario_deuda():
 
     cursor.close()
     conn.close()
-
