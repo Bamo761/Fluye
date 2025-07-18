@@ -1,6 +1,6 @@
 # frances.py
 
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 
 FRECUENCIA_DIAS = {
     'diario': 1,
