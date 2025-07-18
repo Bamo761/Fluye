@@ -86,6 +86,7 @@ def formulario_deuda():
             cliente = next((c for c in clientes if c["cedula"] == cedula), None)
             if cliente:
                 st.session_state.cliente_seleccionado = cliente
+                st.rerun()
 
 
     cliente_seleccionado = st.session_state.get("cliente_seleccionado", None)
