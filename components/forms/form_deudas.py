@@ -104,7 +104,7 @@ def formulario_deuda():
         intermediario_nombre = st.selectbox("Intermediario", intermediario_opciones)
         intermediario = next((i for i in intermediarios if i["nombre"] == intermediario_nombre), None)
 
-        st.divider()
+        st.markdown("---")
         st.subheader("Datos del préstamo")
 
         monto = st.number_input("Monto del préstamo", min_value=0.0, format="%.2f")
