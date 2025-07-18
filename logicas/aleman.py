@@ -1,6 +1,6 @@
 # aleman.py
 
-from datetime import datetime, timedelta. date
+from datetime import datetime, timedelta, date
 
 # Mapa de frecuencias a número de días
 FRECUENCIA_DIAS = {
