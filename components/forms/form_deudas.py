@@ -86,9 +86,13 @@ def formulario_deuda():
                     if len(partes) < 2:
                         st.error("⚠️ Opción inválida: no se puede extraer cédula.")
                     else:
-                        cedula = partes[1]
+                        cedula = partes[1].strip()
                         st.write("📄 Cédula extraída:", cedula)
-                        cliente_encontrado = next((c for c in clientes if c["cedula"] == cedula), None)
+                        cliente_encontrado = next((c for c in clientes if str(c["cedula"]).strip() == cedula), None)
+
+                    
+                        
+                    
                         if cliente_encontrado:
                             st.session_state.cliente_seleccionado = cliente_encontrado
                             st.success(f"Cliente encontrado: {cliente_encontrado['nombre']}")
