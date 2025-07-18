@@ -5,8 +5,8 @@ from datetime import datetime
 from logicas.simulador import simular_prestamo
 
 # Conexión a la base de datos
-    conn = get_connection()
-    cursor = conn.cursor()
+conn = get_connection()
+cursor = conn.cursor()
 
 def registrar_abono(deuda_id, fecha_abono, monto, observacion):
     # 1. Obtener datos básicos de la deuda
