@@ -94,9 +94,6 @@ def formulario_deuda():
                         st.write("📄 Cédula extraída:", cedula)
                         cliente_encontrado = next((c for c in clientes if str(c["cedula"]).strip() == cedula), None)
 
-                    
-                        
-                    
                         if cliente_encontrado:
                             st.session_state.cliente_seleccionado = cliente_encontrado
                             st.success(f"Cliente encontrado: {cliente_encontrado['nombre']}")
@@ -158,6 +155,24 @@ def formulario_deuda():
             st.dataframe(cronograma, use_container_width=True)
 
             if st.button("💾 Guardar deuda y cronograma"):
+                st.info("Intentando guardar la deuda...")
+
+                st.write("🛠️ Datos a guardar:", {
+                    "cliente_id": cliente["id"],
+                    "intermediario_id": intermediario["id"],
+                    "monto": monto,
+                    "frecuencia_pago": frecuencia_pago,
+                    "interes": interes,
+                    "cantidad_pagos": cantidad_pagos,
+                    "pagos_de_gracia": pagos_de_gracia,
+                    "fecha_inicio": fecha_inicio.isoformat(),
+                    "tipo_prestamo": tipo_prestamo,
+                    "cuota_fija": cuota_fija,
+                    "cuotas_totales": cuotas_totales,
+                    "monto_total": monto_total,
+                    "tasa_mora": tasa_mora
+                })
+
                 deuda_id = guardar_deuda(
                     cursor, cliente["id"], intermediario["id"], monto,
                     frecuencia_pago, interes, cantidad_pagos, pagos_de_gracia,
@@ -165,12 +180,23 @@ def formulario_deuda():
                     cuota_fija, cuotas_totales, monto_total, tasa_mora
                 )
 
-                if not cronograma_existe(deuda_id, cursor):
-                    guardar_cronograma(cronograma, cliente["id"], deuda_id, cursor)
+                if deuda_id:
                     conn.commit()
-                    st.success("Deuda y cronograma guardados exitosamente 🥳")
+                    st.success(f"✅ Deuda guardada con ID: {deuda_id}")
+
+                    if cronograma_existe(deuda_id, cursor):
+                        st.warning("⚠️ Esta deuda ya tiene cronograma registrado. No se volverá a guardar.")
+                    else:
+                        st.info("Guardando cronograma de pagos...")
+                        try:
+                            guardar_cronograma(cronograma, cliente["id"], deuda_id, cursor)
+                            conn.commit()
+                            st.success("🧾 Cronograma guardado exitosamente")
+                        except Exception as e:
+                            st.error(f"💥 Error al guardar el cronograma: {e}")
                 else:
-                    st.warning("Esta deuda ya tiene cronograma registrado. No se volvió a guardar.")
+                    st.error("❌ No se pudo guardar la deuda. Revisa los datos o los logs.")
 
     cursor.close()
     conn.close()
+
