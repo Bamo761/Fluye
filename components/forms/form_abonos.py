@@ -1,5 +1,6 @@
 #form_abonos
 import sqlite3
+from db.connection import get_connection
 from datetime import datetime
 from logicas.simulador import simular_prestamo
 
