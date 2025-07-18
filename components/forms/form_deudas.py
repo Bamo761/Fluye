@@ -5,7 +5,6 @@ from datetime import datetime, date
 from db.connection import get_connection
 from logicas.simulador import simular_prestamo
 
-
 # ─── Funciones auxiliares ───────────────────────────────────────────
 
 def obtener_clientes(cursor):
@@ -13,18 +12,15 @@ def obtener_clientes(cursor):
     rows = cursor.fetchall()
     return [{"id": r[0], "nombre": r[1], "cedula": r[2], "placa": r[3]} for r in rows]
 
-
 def obtener_intermediarios(cursor):
     cursor.execute("SELECT id, nombre FROM intermediarios")
     rows = cursor.fetchall()
     return [{"id": r[0], "nombre": r[1]} for r in rows]
 
-
 def buscar_cliente(nombre_buscado, clientes):
     opciones = [f'{c["nombre"]} - {c["cedula"]} - {c["placa"]}' for c in clientes]
     coincidencias = difflib.get_close_matches(nombre_buscado, opciones, n=10, cutoff=0.3)
     return coincidencias
-
 
 def guardar_deuda(cursor, cliente_id, intermediario_id, monto, frecuencia_pago, interes,
                   cantidad_pagos, pagos_de_gracia, fecha_inicio, tipo_prestamo,
@@ -42,7 +38,6 @@ def guardar_deuda(cursor, cliente_id, intermediario_id, monto, frecuencia_pago, 
     ))
     return cursor.lastrowid
 
-
 def guardar_cronograma(cronograma, cliente_id, deuda_id, cursor):
     for fila in cronograma:
         cursor.execute("""
@@ -54,12 +49,10 @@ def guardar_cronograma(cronograma, cliente_id, deuda_id, cursor):
             fila["interes"], fila["abono"], fila["saldo_restante"]
         ))
 
-
 def cronograma_existe(deuda_id, cursor):
     cursor.execute("SELECT COUNT(*) FROM cronograma_pagos WHERE deuda_id = ?", (deuda_id,))
     count = cursor.fetchone()[0]
     return count > 0
-
 
 # ─── FORMULARIO ─────────────────────────────────────────────────────
 
@@ -72,13 +65,13 @@ def formulario_deuda():
     clientes = obtener_clientes(cursor)
     intermediarios = obtener_intermediarios(cursor)
 
-    # Asegurar estado del cliente
+    # Asegurarse de que session_state tenga el cliente
     if "cliente_seleccionado" not in st.session_state:
         st.session_state.cliente_seleccionado = None
 
-    cliente_seleccionado = st.session_state.cliente_seleccionado
+    cliente = st.session_state.cliente_seleccionado
 
-    if cliente_seleccionado is None:
+    if cliente is None:
         st.subheader("Buscar Cliente")
         nombre_ingresado = st.text_input("Nombre / Cédula / Placa")
 
@@ -88,18 +81,22 @@ def formulario_deuda():
             opcion = st.selectbox("Coincidencias:", coincidencias, key="coincidencia_seleccionada")
             if st.button("✅ Seleccionar cliente"):
                 cedula = opcion.split(" - ")[1]
-                cliente = next((c for c in clientes if c["cedula"] == cedula), None)
-                if cliente:
-                    st.session_state.cliente_seleccionado = cliente
-                    st.experimental_rerun()
+                cliente_encontrado = next((c for c in clientes if c["cedula"] == cedula), None)
+                if cliente_encontrado:
+                    st.session_state.cliente_seleccionado = cliente_encontrado
+                    st.rerun()
+
+        st.info("Busca y selecciona un cliente para comenzar.")
+
     else:
-        cliente = st.session_state.cliente_seleccionado
+        # Ya hay cliente seleccionado → mostrar formulario completo
         st.success(f"Cliente seleccionado: {cliente['nombre']} ({cliente['cedula']})")
 
         if st.button("🔁 Cambiar cliente"):
             st.session_state.cliente_seleccionado = None
-            st.experimental_rerun()
+            st.rerun()
 
+        # 🔽 Aquí sí viene tu formulario completo ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
         intermediario_opciones = [i["nombre"] for i in intermediarios]
         intermediario_nombre = st.selectbox("Intermediario", intermediario_opciones)
         intermediario = next((i for i in intermediarios if i["nombre"] == intermediario_nombre), None)
@@ -118,10 +115,10 @@ def formulario_deuda():
 
         with st.expander("🧠 ¿Qué significa cada sistema de préstamo?"):
             st.info("""
-                **Francés**: Cuota fija.  
-                **Alemán**: Amortización fija, intereses decrecientes.  
-                **Americano**: Intereses periódicos y capital al final.  
-                **Simple/Compuesto**: Modelos financieros generales.
+            **Francés**: Cuota fija.  
+            **Alemán**: Amortización fija, intereses decrecientes.  
+            **Americano**: Intereses periódicos y capital al final.  
+            **Simple/Compuesto**: Modelos financieros generales.
             """)
 
         if st.button("📊 Simular"):
@@ -159,3 +156,4 @@ def formulario_deuda():
 
     cursor.close()
     conn.close()
+
