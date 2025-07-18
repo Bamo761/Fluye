@@ -1,6 +1,6 @@
 #compuesto
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 
 FRECUENCIA_DIAS = {
     'diario': 1,
@@ -24,7 +24,9 @@ def calcular_prestamo(
     """
 
     dias_por_periodo = FRECUENCIA_DIAS[frecuencia_pago]
-    fecha_base = datetime.strptime(fecha_inicio, "%Y-%m-%d")
+    
+    fecha_base = datetime.combine(fecha_inicio, datetime.min.time())
+
     cuotas_totales = cantidad_pagos - periodo_gracia
 
     if cuotas_totales <= 0:
