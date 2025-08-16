@@ -8,7 +8,7 @@ FRECUENCIA_DIAS = {
     'quincenal': 15,
     'mensual': 30,
 }
-
+#comentario
 
 def calcular_prestamo(
     monto,
